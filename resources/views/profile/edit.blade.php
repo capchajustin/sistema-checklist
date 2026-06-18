@@ -38,16 +38,22 @@
                 <div class="lg:col-span-1 bg-[#1a2e3b] border border-slate-700/50 rounded-2xl p-6 shadow-xl text-center">
                     
                     <div class="relative w-28 h-28 mx-auto mb-4">
-    @if(Auth::user()->avatar)
-        <img src="{{ asset('storage/' . Auth::user()->avatar) }}" 
-             alt="Foto de Perfil" 
-             class="w-full h-full object-cover rounded-full border-2 border-cyan-500 shadow-lg">
-    @else
-        <div class="w-full h-full bg-cyan-600/20 text-cyan-400 border-2 border-cyan-500 rounded-full flex items-center justify-center text-3xl font-bold uppercase shadow-inner">
-            {{ substr(Auth::user()->name, 0, 2) }}
-        </div>
-    @endif
-</div>
+                        @if(Auth::user()->avatar)
+                            @if(\Illuminate\Support\Str::startsWith(Auth::user()->avatar, 'http'))
+                                <img src="{{ Auth::user()->avatar }}" 
+                                     alt="Foto de Perfil" 
+                                     class="w-full h-full object-cover rounded-full border-2 border-cyan-500 shadow-lg">
+                            @else
+                                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" 
+                                     alt="Foto de Perfil" 
+                                     class="w-full h-full object-cover rounded-full border-2 border-cyan-500 shadow-lg">
+                            @endif
+                        @else
+                            <div class="w-full h-full bg-cyan-600/20 text-cyan-400 border-2 border-cyan-500 rounded-full flex items-center justify-center text-3xl font-bold uppercase shadow-inner">
+                                {{ substr(Auth::user()->name, 0, 2) }}
+                            </div>
+                        @endif
+                    </div>
                     
                     <h3 class="text-lg font-bold text-white tracking-wide whitespace-normal break-words px-2">
                         {{ Auth::user()->name }} {{ Auth::user()->apellidos }}

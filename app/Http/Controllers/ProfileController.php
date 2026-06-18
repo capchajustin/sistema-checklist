@@ -8,7 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Storage;
+use Cloudinary\Configuration\Configuration; 
+use Cloudinary\Api\Upload\UploadApi;       
 
 class ProfileController extends Controller
 {
@@ -26,35 +27,35 @@ class ProfileController extends Controller
      * Update the user's profile information.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
-{
-    $user = $request->user();
-    
-    // Llenar los datos de texto (Nombres, Apellidos, DNI, Teléfono, Email)
-    $user->fill($request->validated());
+    {
+        $user = $request->user();
+        
+        // Llenar los datos de texto (Nombres, Apellidos, DNI, Teléfono, Email)
+        $user->fill($request->validated());
 
-    if ($user->isDirty('email')) {
-        $user->email_verified_at = null;
-    }
-
-    // PROCESAR LA FOTO DE PERFIL (AVATAR)
-    if ($request->hasFile('avatar')) {
-        // 1. Si el usuario ya tenía una foto guardada antes, la borramos para no llenar el disco de basura
-        if ($user->avatar) {
-            Storage::disk('public')->delete($user->avatar);
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        // 2. Guardar el nuevo archivo en la carpeta 'avatars' dentro de storage/app/public
-        $path = $request->file('avatar')->store('avatars', 'public');
+        // PROCESAR LA FOTO DE PERFIL (AVATAR) CON CLOUDINARY NATIVO
+        if ($request->hasFile('avatar')) {
+            // Inicializar el SDK usando la variable de entorno de Render
+            Configuration::instance(env('CLOUDINARY_URL'));
 
-        // 3. Asignar la ruta al campo avatar del usuario
-        $user->avatar = $path;
+            $uploadApi = new UploadApi();
+            $response = $uploadApi->upload($request->file('avatar')->getRealPath(), [
+                'folder' => 'avatars' // Lo guarda organizado en la carpeta 'avatars' dentro de Cloudinary
+            ]);
+
+            // Asignar la URL HTTPS directa y limpia devuelta por la API al campo avatar
+            $user->avatar = $response['secure_url'];
+        }
+
+        // Guardar todos los cambios en la base de datos de Aiven
+        $user->save();
+
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
-
-    // Guardar todos los cambios en la base de datos
-    $user->save();
-
-    return Redirect::route('profile.edit')->with('status', 'profile-updated');
-}
 
     /**
      * Delete the user's account.
