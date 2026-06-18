@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ActivitySubmission;
 use Carbon\Carbon;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Cloudinary\Configuration\Configuration; 
+use Cloudinary\Api\Upload\UploadApi;      
 
 class ChecklistController extends Controller
 {
@@ -62,7 +63,7 @@ class ChecklistController extends Controller
     }
 
     /**
-     * Método único para procesar y almacenar el checklist en Cloudinary y Aiven MySQL
+     * Método para almacenar usando el SDK Nativo de Cloudinary
      */
     public function storeSubmission(Request $request)
     {
@@ -71,7 +72,7 @@ class ChecklistController extends Controller
             'project_name'   => 'required|string|max:255',
             'activity_title' => 'required|string|max:255',
             'description'    => 'required|string|max:2000',
-            'evidence_photo' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120', // Máximo 5MB
+            'evidence_photo' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $user = auth()->user();
@@ -90,25 +91,31 @@ class ChecklistController extends Controller
             return redirect()->back()->withErrors(['error' => 'No puedes saltarte las reglas de control. Este bloque está cerrado por horario.']);
         }
 
-        // --- ENVIAR MULTIMEDIA EXCLUSIVAMENTE A CLOUDINARY ---
+        // --- SUBIDA USANDO EL SDK NATIVO ---
         $photoUrl = null;
         if ($request->hasFile('evidence_photo')) {
-            $uploadedFileUrl = Cloudinary::upload($request->file('evidence_photo')->getRealPath(), [
+            // Inicializar la configuración leyendo directamente de la variable de Render
+            Configuration::instance(env('CLOUDINARY_URL'));
+
+            // Ejecutar la subida directa
+            $uploadApi = new UploadApi();
+            $response = $uploadApi->upload($request->file('evidence_photo')->getRealPath(), [
                 'folder' => 'evidencias_checklist'
-            ])->getSecurePath();
-            
-            $photoUrl = $uploadedFileUrl;
+            ]);
+
+            // Extraer la URL segura devuelta por la API
+            $photoUrl = $response['secure_url'];
         }
 
-        // --- CREACIÓN DEL REGISTRO UNIFICADO ---
+        // --- CREACIÓN DEL REGISTRO EN LA BD DE AIVEN ---
         ActivitySubmission::create([
-            'user_id'        => $user->id, 
+            'user_id'        => $user->id,
             'time_block'     => $request->time_block,
             'project_name'   => $request->project_name,
             'activity_title' => $request->activity_title,
             'description'    => $request->description,
-            'evidence_photo' => $photoUrl, // URL permanente de Cloudinary
-            'status'         => 'pending', // Mantiene el estado para revisión automática
+            'evidence_photo' => $photoUrl, 
+            'status'         => 'pending',
             'submitted_at'   => $today,
         ]);
 
