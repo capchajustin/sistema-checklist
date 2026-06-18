@@ -123,15 +123,28 @@
                                                 <span class="text-slate-500 font-bold block uppercase text-[10px] mb-2">Captura del Sistema Adjunta:</span>
                                                 <div class="relative rounded overflow-hidden bg-slate-900 border border-slate-700 h-36 flex items-center justify-center">
                                                     @if($sub->evidence_photo)
-                                                        <img src="{{ asset('storage/' . $sub->evidence_photo) }}" class="object-cover w-full h-full opacity-80 hover:opacity-100 transition-opacity" alt="Evidencia de trabajo">
+                                                        @if(\Illuminate\Support\Str::startsWith($sub->evidence_photo, 'http'))
+                                                            <img src="{{ $sub->evidence_photo }}" class="object-cover w-full h-full opacity-80 hover:opacity-100 transition-opacity" alt="Evidencia de trabajo">
+                                                        @else
+                                                            <img src="{{ asset('storage/' . $sub->evidence_photo) }}" class="object-cover w-full h-full opacity-80 hover:opacity-100 transition-opacity" alt="Evidencia de trabajo">
+                                                        @endif
                                                     @else
                                                         <span class="text-slate-600 text-[10px]">Sin archivo visual</span>
                                                     @endif
                                                 </div>
                                             </div>
-                                            <a href="{{ asset('storage/' . $sub->evidence_photo) }}" target="_blank" class="mt-3 text-center py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold rounded-md text-[11px] block transition-colors">
-                                                🔍 Ver Evidencia en Pantalla Completa
-                                            </a>
+                                            
+                                            @if($sub->evidence_photo)
+                                                <a href="{{ \Illuminate\Support\Str::startsWith($sub->evidence_photo, 'http') ? $sub->evidence_photo : asset('storage/' . $sub->evidence_photo) }}" 
+                                                   target="_blank" 
+                                                   class="mt-3 text-center py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold rounded-md text-[11px] block transition-colors">
+                                                    🔍 Ver Evidencia en Pantalla Completa
+                                                </a>
+                                            @else
+                                                <button type="button" disabled class="mt-3 text-center py-2 bg-slate-800/40 text-slate-600 font-bold rounded-md text-[11px] block cursor-not-allowed">
+                                                    🚫 Sin Archivo Adjunto
+                                                </button>
+                                            @endif
                                         </div>
                                     </div>
 
