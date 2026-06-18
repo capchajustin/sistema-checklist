@@ -149,13 +149,21 @@
                                 </p>
                             </div>
 
-                            <div class="pt-2">
-                                <span class="text-slate-500 font-bold block uppercase text-[10px] mb-2">Archivo de Evidencia:</span>
-                                <a href="{{ asset('storage/' . $currentSubmission->evidence_photo) }}" target="_blank" 
-                                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-750 text-cyan-400 rounded-lg font-semibold text-xs transition-colors shadow-sm">
-                                    📸 Ver captura enviada
-                                </a>
-                            </div>
+                           <div class="pt-2">
+    <span class="text-slate-500 font-bold block uppercase text-[10px] mb-2">Archivo de Evidencia:</span>
+    
+    @if(Str::startsWith($currentSubmission->evidence_photo, 'http'))
+        <a href="{{ $currentSubmission->evidence_photo }}" target="_blank" 
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-750 text-cyan-400 rounded-lg font-semibold text-xs transition-colors shadow-sm">
+            📸 Ver captura enviada (Cloudinary)
+        </a>
+    @else
+        <a href="{{ asset('storage/' . $currentSubmission->evidence_photo) }}" target="_blank" 
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-750 text-cyan-400 rounded-lg font-semibold text-xs transition-colors shadow-sm">
+            📸 Ver captura enviada (Local)
+        </a>
+    @endif
+</div>
                         </div>
                     @endif
                 </div>
